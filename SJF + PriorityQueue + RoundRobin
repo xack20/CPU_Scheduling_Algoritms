@@ -1,0 +1,445 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+
+#define FileIO  freopen("input.txt", "r", stdin);   freopen("output.txt", "w", stdout);
+#define FixedPrecision(x)   ios::sync_with_stdio(false); cout.setf(ios::fixed); cout.precision(x); cin.tie(0);
+
+
+struct pro
+{
+    string pro_name;
+    double priority;
+    double arrival_time;
+    double burst_time;
+
+}typedef pro;
+
+
+
+
+
+
+bool sort_for_priorityScheduling(const pro &a ,const pro &b){
+    if(a.arrival_time == b.arrival_time && a.priority == b.priority)return (a.burst_time < b.burst_time);
+    if(a.arrival_time == b.arrival_time)return(a.priority>b.priority);
+    return (a.arrival_time<b.arrival_time);
+}
+
+bool sort_for_roundRobin(const pro &a ,const pro &b){return (a.arrival_time<b.arrival_time);}
+
+bool sort_for_shortestJobFirst(const pro &a ,const pro &b){
+    if(a.arrival_time == b.arrival_time)return(a.burst_time<b.burst_time);
+    return (a.arrival_time<b.arrival_time);
+}
+
+
+
+
+
+void SJFP()
+{
+
+
+    printf("                                  You have selected : Shortest Job First Preemptive               \n\n");
+    printf("                                                   Input format\n\n");
+    printf("                             process_number <space> arrival_time <space> burst_time\n\n");
+    printf("                                            Example : P1 5 7\n                                                      P2 8 10\n\n");
+    printf("          After entering all the values Press ('ctrl' and 'z' together) to perform a End Of File (EOF)\n\n");
+    printf("                                                Enter your values : \n\n");
+
+
+    vector<pro> vp;
+
+    pro var;
+
+    /// taking inputs
+    while(cin >> var.pro_name >> var.arrival_time >> var.burst_time)
+        vp.push_back(var);
+
+
+
+    int total_pro = vp.size();
+
+
+    /// sorting process list according to arrival time and burst time
+    sort(vp.begin(),vp.end(),sort_for_shortestJobFirst);
+
+
+    int counter = 0;
+    double recent_time = 0;
+
+    vector < string > process_list;
+    vector < double > time_list;
+
+
+    /// Main Algorithm
+    while( counter != total_pro )
+    {
+
+        vector < int >  task_in_system_now ;
+
+        for(int i = 0 ; i < total_pro ; i ++)
+            if ( vp[i].burst_time !=-1 && vp[i].arrival_time <= recent_time )
+                task_in_system_now.push_back(i);
+
+
+        if(task_in_system_now.size()==0)
+        {
+            process_list.push_back("Idle");
+            time_list.push_back(recent_time);
+            recent_time++;
+            continue;
+        }
+
+        int indx = 0;
+
+        double brst = vp[task_in_system_now[0]].burst_time;
+
+        for(int i = 1 ; i < task_in_system_now.size() ; i++)
+        {
+            if( vp[task_in_system_now[i]].burst_time < brst)
+            {
+                brst = vp[task_in_system_now[i]].burst_time;
+                indx = i;
+            }
+
+        }
+
+        vp[task_in_system_now[indx]].burst_time--;
+        if(vp[task_in_system_now[indx]].burst_time<0)counter++;
+
+        process_list.push_back(" "+vp[task_in_system_now[indx]].pro_name+" ");
+        time_list.push_back(recent_time);
+
+        recent_time++;
+        if(vp[task_in_system_now[indx]].burst_time<0)recent_time--;
+
+    }
+    time_list.push_back(recent_time);
+
+
+
+
+
+    ///       For decoration and output         ///
+
+
+    printf("Gantt Chart :\n\n");
+
+
+    vector < pair < string , double > > finall;
+
+    int c = 0 ;
+    for(int i = 0 ; i < process_list.size() ; i++)
+    {
+        if(!i){c++;finall.push_back(make_pair(process_list[i],time_list[i]));}
+        else if(process_list[i]!=process_list[i-1]){c++;finall.push_back(make_pair(process_list[i],time_list[i]));}
+    }
+
+    for(int i = 0 ; i < (c * 4 + c); i++)cout <<"_";
+    cout << endl << endl;
+
+
+    for(auto name : finall)cout << name.first << "|";
+
+
+    cout << endl;
+    for(int i = 0 ; i < (c * 4 + c); i++)cout <<"_";
+    cout << endl ;
+
+    for(auto name : finall){
+        if((int)log10((int)name.second)+1 == 1)cout << name.second << "    ";
+        else cout << name.second << "   ";
+    }
+    cout << time_list[time_list.size()-1] <<endl << endl;
+}
+
+
+
+
+
+
+void PSP()
+{
+    printf("                                  You have selected : Priority Scheduling Preemptive               \n\n");
+    printf("                                                   Input format\n\n");
+    printf("                 process_number <space> priority_value <space> arrival_time <space> burst_time\n\n");
+    printf("                                            Example : P1 2 5 7\n                                                      P2 1 0 10\n\n");
+    printf("          After entering all the values Press ('ctrl' and 'z' together) to perform a End Of File (EOF)\n\n");
+    printf("                                                Enter your values : \n\n");
+
+
+    vector<pro>vp;
+
+    pro var;
+
+    while(cin >> var.pro_name >> var.priority >> var.arrival_time >> var.burst_time)
+        vp.push_back(var);
+
+    int total_pro = vp.size();
+
+    sort(vp.begin(),vp.end(),sort_for_priorityScheduling);
+
+
+    int counter = 0;
+    int recent_time = 0;
+
+    vector < string > process_list;
+    vector < int > time_list;
+
+    while( counter != total_pro )
+    {
+
+        vector < int >  task_in_system_now ;
+
+        for(int i = 0 ; i < total_pro ; i ++)
+            if ( vp[i].burst_time != -1 && vp[i].arrival_time <= recent_time )
+                task_in_system_now.push_back(i);
+
+
+        if(task_in_system_now.size()==0)
+        {
+            process_list.push_back("Idle");
+            time_list.push_back(recent_time);
+            recent_time++;
+            continue;
+        }
+
+        int indx = 0;
+        int prt = vp[task_in_system_now[0]].priority;
+        int brst = vp[task_in_system_now[0]].burst_time;
+
+        for(int i = 1 ; i < task_in_system_now.size() ; i++)
+        {
+            if( vp[task_in_system_now[i]].priority > prt)
+            {
+                prt = vp[task_in_system_now[i]].priority;
+                brst = vp[task_in_system_now[i]].burst_time;
+                indx = i;
+            }
+            else if( vp[task_in_system_now[i]].priority == prt && vp[task_in_system_now[i]].burst_time < brst )
+            {
+                brst = vp[task_in_system_now[i]].burst_time;
+                indx = i;
+            }
+
+        }
+
+        vp[task_in_system_now[indx]].burst_time--;
+        if(vp[task_in_system_now[indx]].burst_time<0){counter++;recent_time--;}
+
+        process_list.push_back(" "+vp[task_in_system_now[indx]].pro_name+" ");
+        time_list.push_back(recent_time);
+
+        recent_time++;
+
+    }
+    time_list.push_back(recent_time);
+
+
+
+
+
+    ///       For decoration and output         ///
+
+    printf("Gantt Chart :\n\n");
+
+
+
+    vector < pair < string , int > > finall;
+
+    int c = 0 ;
+    for(int i = 0 ; i < process_list.size() ; i++)
+    {
+        if(!i){c++;finall.push_back(make_pair(process_list[i],time_list[i]));}
+        else if(process_list[i]!=process_list[i-1]){c++;finall.push_back(make_pair(process_list[i],time_list[i]));}
+    }
+
+    for(int i = 0 ; i < (c*4 + c); i++)cout <<"_";
+    cout << endl << endl;
+
+
+    for(auto name : finall)cout << name.first << "|";
+
+
+    cout << endl;
+    for(int i = 0 ; i < (c*4 + c); i++)cout <<"_";
+    cout << endl ;
+
+    for(auto name : finall){
+        if((int)log10(name.second)+1 == 1)cout << name.second << "    ";
+        else cout << name.second << "   ";
+    }
+
+    cout << time_list[time_list.size()-1] <<endl << endl;
+}
+
+void RR()
+{
+    printf("                                  You have selected : Round Robin with a Time Quantum               \n\n");
+    printf("                                            Enter the value of Time Quantum               \n\n");
+    printf("                                                           ");
+    double time_quantum;
+    scanf("%lf",&time_quantum);
+    printf("\n");
+    printf("                                                   Input format\n\n");
+    printf("                             process_number <space> arrival_time <space> burst_time\n\n");
+    printf("                                            Example : P1 5 7\n                                                      P2 8 10\n\n");
+    printf("          After entering all the values Press ('ctrl' and 'z' together) to perform a End Of File (EOF)\n\n");
+    printf("                                                Enter your values : \n\n");
+
+    vector<pro>vp;
+
+    pro var;
+    while(cin >> var.pro_name >> var.arrival_time >> var.burst_time)
+        vp.push_back(var);
+
+    int total_pro = vp.size();
+
+    sort(vp.begin(),vp.end(),sort_for_roundRobin);
+
+
+    int counter = 0;
+    double recent_time = 0;
+
+    vector < string > process_list;
+    vector < double > time_list;
+
+    vector< pair< string, double > > finalQueue;
+    vector<pro> onTaskQueue;
+
+    map<int,bool> once_in;
+
+    int f = 0;
+    pro saved;
+
+    while( counter != total_pro )
+    {
+        //cout << counter << endl;
+
+
+        for(int i = 0 ; i < total_pro ; i ++)
+        {
+            if(!once_in[i] && vp[i].arrival_time <= recent_time){
+                onTaskQueue.push_back(vp[i]);
+                once_in[i] = true;
+            }
+        }
+        if(f)onTaskQueue.push_back(saved);
+
+        if(onTaskQueue.size()==0)
+        {
+            process_list.push_back("Idle");
+            time_list.push_back(recent_time);
+            recent_time+=(0.1);
+            continue;
+        }
+
+
+        if(time_quantum>=onTaskQueue[0].burst_time)
+        {
+            f=0;
+            process_list.push_back(" "+onTaskQueue[0].pro_name+" ");
+            time_list.push_back(recent_time);
+
+            recent_time+=onTaskQueue[0].burst_time;
+            finalQueue.push_back( make_pair(onTaskQueue[0].pro_name,onTaskQueue[0].burst_time) );
+            onTaskQueue.erase(onTaskQueue.begin());
+            onTaskQueue.shrink_to_fit();
+            counter++;
+        }
+        else
+        {
+
+            f=1;
+            process_list.push_back(" "+onTaskQueue[0].pro_name+" ");
+            time_list.push_back(recent_time);
+
+            recent_time+=time_quantum;
+            finalQueue.push_back( make_pair(onTaskQueue[0].pro_name,onTaskQueue[0].burst_time) );
+
+            saved = onTaskQueue[0];
+            saved.burst_time-=time_quantum;
+
+            onTaskQueue.erase(onTaskQueue.begin());
+            onTaskQueue.shrink_to_fit();
+        }
+
+
+    }
+    time_list.push_back(recent_time);
+
+
+
+
+
+    ///       For decoration and output         ///
+
+
+    printf("Gantt Chart :\n\n");
+
+    vector < pair < string , double > > finall;
+
+    int c = 0 ;
+    for(int i = 0 ; i < process_list.size() ; i++)
+    {
+        if(!i){c++;finall.push_back(make_pair(process_list[i],time_list[i]));}
+        else if(process_list[i]!=process_list[i-1]){c++;finall.push_back(make_pair(process_list[i],time_list[i]));}
+    }
+
+    for(int i = 0 ; i < (c * 6 + c); i++)cout <<"_";
+    cout << endl << endl;
+
+
+    for(auto name : finall)cout << name.first << " | ";
+
+
+    cout << endl;
+    for(int i = 0 ; i < (c * 6 + c); i++)cout <<"_";
+    cout << endl ;
+
+    for(auto name : finall){
+        if((int)log10((int)name.second)+1 == 1)cout << name.second << "    ";
+        else cout << name.second << "   ";
+    }
+    cout << time_list[time_list.size()-1] <<endl << endl;
+
+
+    ///     final queue    ///
+
+    printf("Queue:\n\n");
+
+    for(auto fq : finalQueue)cout << fq.first << " (" << fq.second << ")" << endl;
+}
+
+
+
+int main()
+{
+
+    //FileIO;
+    FixedPrecision(1);
+
+    printf("                       ------------------------------------------------------------------------\n");
+    printf("                      |                                                                        |\n");
+    printf("                      |                     Enter a number from (1 to 3)                       |\n");
+    printf("                      |                                                                        |\n");
+    printf("                      |                  1. Shortest Job First Preemptive                      |\n");
+    printf("                      |                  2. Priority Scheduling Preemptive                     |\n");
+    printf("                      |                  3. Round Robin with a Time Quantum                    |\n");
+    printf("                      |                                                                        |\n");
+    printf("                       ------------------------------------------------------------------------\n\n");
+    printf("                                                          ");
+
+    int selection; scanf("%d",&selection);
+    printf("\n\n");
+
+    if(selection == 1)SJFP();
+    else if(selection == 2)PSP();
+    else RR();
+
+
+    return 0;
+
+}
